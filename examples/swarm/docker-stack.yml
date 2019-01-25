@@ -1,0 +1,46 @@
+version: '3.7'
+
+x-galera-service:
+  &x-galera-service
+  image: yogurt1/galera
+  environment:
+    - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+    - XTRABACKUP_PASSWORD_FILE=/run/secrets/xtrabackup_password
+    - CLUSTER_NAME=galera
+  secrets:
+    - mysql_root_password
+    - xtrabackup_password
+  networks:
+    - galera
+
+secrets:
+  mysql_root_password:
+    external: true
+
+  xtrabackup_password:
+    external: true
+
+volumes:
+  galera_data:
+    name: 'galera{{ .Task.Slot }}_data'
+
+networks:
+  galera:
+    external: true
+
+services:
+  galera:
+    << : *x-galera-service
+    volumes:
+      - galera_data:/var/lib/mysql
+    deploy:
+      replicas: 3
+
+  # Galera Arbitrator
+  garbd:
+    << : *x-galera-service
+    command: garbd
+    healthcheck:
+      disable: true
+    deploy:
+      replicas: 1

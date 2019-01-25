@@ -1,0 +1,1 @@
+IMAGE_TAG = yogurt1/galera
